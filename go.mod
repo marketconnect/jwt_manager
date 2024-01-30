@@ -1,4 +1,4 @@
-module jwt_manager
+module github.com/marketconnect/jwt_manager
 
 go 1.21.6
 
