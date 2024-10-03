@@ -11,28 +11,31 @@ type JWTManager struct {
 	secretKey     string
 	tokenDuration time.Duration
 }
+
 type UserClaims struct {
 	jwt.StandardClaims
-	UserId uint64 `json:"userId"`
+	UserId       uint64 `json:"userId"`
+	Subscription string `json:"subscription"`
 }
 
 func NewJWTManager(secretKey string, tokenDuration time.Duration) *JWTManager {
 	return &JWTManager{secretKey, tokenDuration}
 }
 
-func (manager *JWTManager) Generate(userId uint64) (string, error) {
+func (manager *JWTManager) Generate(userId uint64, subscription string) (string, error) {
 	claims := UserClaims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(manager.tokenDuration).Unix(),
 		},
-		UserId: userId,
+		UserId:       userId,
+		Subscription: subscription,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(manager.secretKey))
 }
 
-func (manager *JWTManager) Verify(accessToken string) (*uint64, error) {
+func (manager *JWTManager) Verify(accessToken string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(
 		accessToken,
 		&UserClaims{},
@@ -41,7 +44,6 @@ func (manager *JWTManager) Verify(accessToken string) (*uint64, error) {
 			if !ok {
 				return nil, fmt.Errorf("unexpected token signing method")
 			}
-
 			return []byte(manager.secretKey), nil
 		},
 	)
@@ -55,5 +57,5 @@ func (manager *JWTManager) Verify(accessToken string) (*uint64, error) {
 		return nil, fmt.Errorf("invalid token claims")
 	}
 
-	return &claims.UserId, nil
+	return claims, nil
 }
