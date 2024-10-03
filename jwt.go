@@ -35,7 +35,7 @@ func (manager *JWTManager) Generate(userId uint64, subscription string) (string,
 	return token.SignedString([]byte(manager.secretKey))
 }
 
-func (manager *JWTManager) Verify(accessToken string) (string, uint64, error) {
+func (manager *JWTManager) Verify(accessToken string) (*uint64, *string, error) {
 	token, err := jwt.ParseWithClaims(
 		accessToken,
 		&UserClaims{},
@@ -49,13 +49,13 @@ func (manager *JWTManager) Verify(accessToken string) (string, uint64, error) {
 	)
 
 	if err != nil {
-		return "", 0, fmt.Errorf("invalid token: %w", err)
+		return nil, nil, fmt.Errorf("invalid token: %w", err)
 	}
 
 	claims, ok := token.Claims.(*UserClaims)
 	if !ok {
-		return "", 0, fmt.Errorf("invalid token claims")
+		return nil, nil, fmt.Errorf("invalid token claims")
 	}
 
-	return claims.Subscription, claims.UserId, nil
+	return &claims.UserId, &claims.Subscription, nil
 }
